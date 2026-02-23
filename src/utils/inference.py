@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from PIL import Image
 
 # Global paths
@@ -43,6 +44,9 @@ def predict_image_class(uploaded_file, model):
     
     # Create a batch axis: shape becomes (1, 224, 224, 3)
     img_array = tf.expand_dims(img_array, 0)
+    
+    # Normalize pixels to [-1, 1] to match MobileNetV2 training expectations
+    img_array = preprocess_input(img_array)
     
     # Get predictions
     predictions = model.predict(img_array)
