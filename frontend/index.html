@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiSetu | Agri-Waste Valuator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for SHAP explanations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="bg-green-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-leaf"></i> KrishiSetu
+            </h1>
+            <div class="text-sm font-light hidden md:block">
+                Agricultural Waste Valuation System
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-12 gap-6 relative">
+        
+        <!-- Left Sidebar: Controls -->
+        <div class="md:col-span-4 space-y-6">
+            
+            <!-- Location Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-solid fa-location-dot text-green-500 mr-2"></i>Location</h2>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select your State:</label>
+                <select id="state-select" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-green-500 focus:border-green-500 border bg-white">
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jharkhand">Jharkhand</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Maharashtra" selected>Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Mizoram">Mizoram</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Uttarakhand">Uttarakhand</option>
+                    <option value="West Bengal">West Bengal</option>
+                </select>
+            </div>
+
+            <!-- Upload Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2"><i class="fa-solid fa-camera text-green-500 mr-2"></i>Image Upload</h2>
+                
+                <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition-colors hover:border-green-500 hover:bg-green-50">
+                    <div id="upload-prompt">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-700">Click to upload or drag and drop</p>
+                        <p class="text-xs text-gray-500 mt-1">JPG, JPEG, PNG</p>
+                    </div>
+                    <!-- Image Preview -->
+                    <img id="image-preview" class="hidden mx-auto max-h-48 rounded-md" alt="Preview">
+                </div>
+                <!-- Hidden file input -->
+                <input type="file" id="file-input" class="hidden" accept="image/jpeg, image/png, image/jpg">
+
+                <button id="analyze-btn" disabled class="mt-4 w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-all hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Analyze Image
+                </button>
+            </div>
+            
+        </div>
+
+        <!-- Right Main Area: Results -->
+        <div class="md:col-span-8 space-y-6">
+            
+            <!-- Loading Overlay (hidden by default) -->
+            <div id="loading-state" class="hidden flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-sm border border-gray-100 h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+                <h3 class="text-lg font-medium text-gray-700">Analyzing your sample...</h3>
+                <p class="text-sm text-gray-500">Running CNN classification and RF evaluation</p>
+            </div>
+
+            <!-- Results Dashboard (hidden by default) -->
+            <div id="results-dashboard" class="hidden space-y-6">
+                
+                <!-- Top Row: CNN and Price -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- CNN Classification Card -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-green-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-700">Classification (CNN)</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">MobileNetV2</span>
+                        </div>
+                        <div class="text-center py-2">
+                            <p class="text-3xl font-bold text-gray-800 mb-1" id="res-class">Apple Pomace</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 mb-1">
+                                <div id="res-conf-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm font-medium text-gray-500">Confidence: <span id="res-conf">0</span>%</p>
+                        </div>
+                    </div>
+
+                    <!-- Price Evaluation Card -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-blue-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-700">Market Price (RF)</h3>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Random Forest</span>
+                        </div>
+                        <div class="text-center py-2">
+                            <p class="text-4xl font-bold text-blue-600 mb-1" id="res-price">₹0.00</p>
+                            <p class="text-sm font-medium text-gray-500">Estimated value per kg in <span id="res-target-state">Maharashtra</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: XAI Explanations -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Grad-CAM Explainer -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <h3 class="font-semibold text-gray-700 mb-2">Visual Explainability (Grad-CAM)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Shows which parts of the image the CNN focused on.</p>
+                        <div class="flex justify-center bg-gray-50 p-2 rounded relative">
+                            <img id="heatmap-img" class="max-h-56 rounded border" src="" alt="Heatmap loading...">
+                            <div id="heatmap-loader" class="absolute inset-0 flex items-center justify-center bg-white/50 hidden">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SHAP Explainer -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <h3 class="font-semibold text-gray-700 mb-2">Price Explainability (SHAP)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Shows how features influenced the base price.</p>
+                        <div class="relative w-full h-56">
+                            <canvas id="shapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Welcome State (visible initially) -->
+            <div id="welcome-state" class="bg-white rounded-xl shadow-sm p-12 border border-gray-100 text-center text-gray-500 h-64 flex flex-col justify-center">
+                <i class="fa-solid fa-chart-line text-4xl mb-4 text-gray-300"></i>
+                <h3 class="text-lg font-medium text-gray-700">Ready for Analysis</h3>
+                <p class="text-sm mt-2 max-w-sm mx-auto">Upload an image of agricultural waste and select your state to get AI-driven classification and price estimates.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
