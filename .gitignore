@@ -44,3 +44,7 @@ models/
 Agri_Waste_Images/
 Bio_WASTE_Cleaned.csv
 .streamlit/
+
+# Database files
+*.sqlite3
+krishisetu.db
